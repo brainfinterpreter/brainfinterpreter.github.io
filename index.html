@@ -14,7 +14,7 @@
   <textarea oninput="localStorage.setItem('bfcode', document.getElementById('code').value)" id="code" rows="6" placeholder="Enter Brainfuck code here..."></textarea>
   <button onclick="runBF()">▶ Run</button>
   <div id="console"></div>
-
+  <div>Privacy Policy: This page does not collect any data. We autosave your code locally in your browser's LocalStorage.</div>
   <script>
     const tapeSize = 30000;
     let tape = new Uint8Array(tapeSize);
@@ -90,3 +90,4 @@
   </script>
 </body>
 </html>
+
