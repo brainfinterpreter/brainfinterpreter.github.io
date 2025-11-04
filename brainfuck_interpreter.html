@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Brainfuck Interpreter</title>
+  <style>
+    body { font-family: monospace; background: #111; color: #eee; padding: 20px; }
+    textarea { width: 100%; margin: 10px 0; font-family: monospace; background: #222; color: #eee; border: 1px solid #555; padding: 5px; }
+    #console { white-space: pre-wrap; background: #222; padding: 10px; border: 1px solid #555; }
+  </style>
+</head>
+<body>
+  <h1>Brainf*** Interpreter</h1>
+  <textarea oninput="localStorage.setItem('bfcode', document.getElementById('code').value)" id="code" rows="6" placeholder="Enter Brainfuck code here..."></textarea>
+  <button onclick="runBF()">▶ Run</button>
+  <div id="console"></div>
+
+  <script>
+    const tapeSize = 30000;
+    let tape = new Uint8Array(tapeSize);
+    let ptr = 0;
+    let ip = 0;
+    let code = "";
+    let loopStack = [];
+    let waitingForInput = false;
+    let resolveInput;
+
+    function printConsole(text) {
+      document.getElementById("console").textContent += text;
+    }
+
+    function waitForInput() {
+      return new Promise(resolve => {
+        waitingForInput = true;
+        resolveInput = resolve;
+      });
+    }
+
+    document.addEventListener("keydown", function(e) {
+      if (!waitingForInput) return;
+      if (e.key.length === 1) {
+        waitingForInput = false;
+        resolveInput(e.key.charCodeAt(0));
+      }
+    });
+
+    async function runBF() {
+      tape = new Uint8Array(tapeSize);
+      ptr = 0;
+      ip = 0;
+      loopStack = [];
+      code = document.getElementById("code").value;
+      document.getElementById("console").textContent = "";
+
+      while (ip < code.length) {
+        const cmd = code[ip];
+        switch (cmd) {
+          case '>': ptr = (ptr + 1) % tapeSize; break;
+          case '<': ptr = (ptr - 1 + tapeSize) % tapeSize; break;
+          case '+': tape[ptr] = (tape[ptr] + 1) % 256; break;
+          case '-': tape[ptr] = (tape[ptr] - 1 + 256) % 256; break;
+          case '.': printConsole(String.fromCharCode(tape[ptr])); break;
+          case ',': tape[ptr] = await waitForInput(); break;
+          case '[':
+            if (tape[ptr] === 0) {
+              let depth = 1;
+              while (depth > 0 && ++ip < code.length) {
+                if (code[ip] === '[') depth++;
+                else if (code[ip] === ']') depth--;
+              }
+            } else {
+              loopStack.push(ip);
+            }
+            break;
+          case ']':
+            if (tape[ptr] !== 0) {
+              ip = loopStack[loopStack.length - 1];
+            } else {
+              loopStack.pop();
+            }
+            break;
+        }
+        ip++;
+      }
+    }
+    document.getElementById("code").value = localStorage.getItem("bfcode");
+    window.addEventListener("beforeunload", () => {
+        localStorage.setItem("bfcode", document.getElementById("code").value);
+    })
+  </script>
+</body>
+</html>
